@@ -53,7 +53,7 @@ export default function Register() {
     setError("");
     setSubmitting(true);
     try {
-      const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+      const apiBase = import.meta.env.API_BASE || "http://localhost:8000";
       const res = await fetch(`${apiBase}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
