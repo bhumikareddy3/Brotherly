@@ -31,36 +31,24 @@ from recommendation.scoring import calculate_scores
 
 app = FastAPI(title="Brotherly API")
 
-GOOGLE_CLIENT_ID = "1037047413925-75gp0pn626enclbl17a58gavpmft1jk5.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "750860405732-64hbjc31bug369207fi18envrhuv5iu6.apps.googleusercontent.com"
 
-# Comma-separated list of allowed frontend origins, e.g.
-# "https://brotherly.vercel.app,http://localhost:5173"
-# Falls back to "*" for local development.
-_cors_env = os.getenv("CORS_ORIGINS", "*")
-if _cors_env.strip() == "*":
-    ALLOWED_ORIGINS = ["*"]
-    ALLOW_CREDENTIALS = False  # browsers reject "*" + credentials together
-else:
-    ALLOWED_ORIGINS = [origin.strip() for origin in _cors_env.split(",") if origin.strip()]
-    ALLOW_CREDENTIALS = True
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "https://brotherly-ten.vercel.app"
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=ALLOW_CREDENTIALS,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 @app.on_event("startup")
 def on_startup():
     create_database()
-
-
-# --------------------------------------------------------------------------
-# Auth schemas
-# --------------------------------------------------------------------------
 
 class RegisterIn(BaseModel):
     name: str
@@ -81,28 +69,18 @@ class RegisterIn(BaseModel):
             raise ValueError("Password must be at least 8 characters.")
         return v
 
-
 class LoginIn(BaseModel):
     email: EmailStr
     password: str
 
-
 class GoogleAuthIn(BaseModel):
     credential: str
-
 
 class AuthOut(BaseModel):
     token: str
     user: dict
 
-
-# --------------------------------------------------------------------------
-# Auth dependency
-# --------------------------------------------------------------------------
-
 def get_current_user(authorization: Optional[str] = Header(None)):
-    """Reads 'Authorization: Bearer <token>', validates it, and returns the user."""
-
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Not authenticated.")
 
@@ -118,11 +96,6 @@ def get_current_user(authorization: Optional[str] = Header(None)):
 
     return user
 
-
-# --------------------------------------------------------------------------
-# Auth endpoints
-# --------------------------------------------------------------------------
-
 @app.post("/api/auth/register", response_model=AuthOut)
 def register(payload: RegisterIn):
     if get_user_by_email(payload.email):
@@ -133,7 +106,6 @@ def register(payload: RegisterIn):
 
     token = create_access_token(user_id)
     return {"token": token, "user": {"id": user_id, "name": payload.name, "email": payload.email.lower()}}
-
 
 @app.post("/api/auth/login", response_model=AuthOut)
 def login(payload: LoginIn):
@@ -147,7 +119,6 @@ def login(payload: LoginIn):
         "token": token,
         "user": {"id": user["id"], "name": user["name"], "email": user["email"]},
     }
-
 
 @app.post("/api/auth/google", response_model=AuthOut)
 def google_auth(payload: GoogleAuthIn):
@@ -164,7 +135,6 @@ def google_auth(payload: GoogleAuthIn):
 
     user = get_user_by_email(email)
     if user is None:
-        # Create a new user if they don't exist
         user_id = create_user(name, email, "OAUTH_GOOGLE_USER")
     else:
         user_id = user["id"]
@@ -176,15 +146,9 @@ def google_auth(payload: GoogleAuthIn):
         "user": {"id": user_id, "name": name, "email": email},
     }
 
-
 @app.get("/api/auth/me")
 def me(current_user: dict = Depends(get_current_user)):
     return {"user": current_user}
-
-
-# --------------------------------------------------------------------------
-# Assessment schemas
-# --------------------------------------------------------------------------
 
 class AssessmentIn(BaseModel):
     name: str
@@ -214,7 +178,6 @@ class AssessmentIn(BaseModel):
     sold_service: Literal["Yes", "No"]
     long_term_goal: str
 
-
 class AssessmentContext(BaseModel):
     primary: Optional[str] = None
     secondary: Optional[str] = None
@@ -222,15 +185,9 @@ class AssessmentContext(BaseModel):
     scores: Optional[dict] = None
     profile: Optional[list] = None
 
-
 class ChatIn(BaseModel):
     message: str
     context: Optional[AssessmentContext] = None
-
-
-# --------------------------------------------------------------------------
-# Assessment (protected)
-# --------------------------------------------------------------------------
 
 @app.post("/api/assessment")
 def submit_assessment(payload: AssessmentIn, current_user: dict = Depends(get_current_user)):
@@ -266,11 +223,6 @@ def submit_assessment(payload: AssessmentIn, current_user: dict = Depends(get_cu
         "warning": warning,
     }
 
-
-# --------------------------------------------------------------------------
-# Dashboard / History (protected)
-# --------------------------------------------------------------------------
-
 @app.get("/api/dashboard")
 def dashboard(current_user: dict = Depends(get_current_user)):
     latest = get_latest_assessment(current_user["id"])
@@ -288,16 +240,10 @@ def dashboard(current_user: dict = Depends(get_current_user)):
         "plan": get_action_plan(latest["primary_recommendation"]),
     }
 
-
 @app.get("/api/history")
 def history(current_user: dict = Depends(get_current_user)):
     assessments = get_all_assessments(current_user["id"])
     return {"assessments": assessments}
-
-
-# --------------------------------------------------------------------------
-# Mentor chat (protected)
-# --------------------------------------------------------------------------
 
 @app.post("/api/mentor/chat")
 def mentor_chat(payload: ChatIn, current_user: dict = Depends(get_current_user)):
@@ -317,10 +263,9 @@ def mentor_chat(payload: ChatIn, current_user: dict = Depends(get_current_user))
     try:
         save_chat(current_user["id"], payload.message, answer)
     except Exception:
-        pass  # Non-fatal — chat still returns to the user.
+        pass
 
     return {"reply": answer}
-
 
 @app.get("/api/chats")
 def chats(current_user: dict = Depends(get_current_user)):
@@ -331,7 +276,6 @@ def chats(current_user: dict = Depends(get_current_user)):
             for r in rows
         ]
     }
-
 
 @app.get("/api/health")
 def health():
