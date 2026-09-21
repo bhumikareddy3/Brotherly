@@ -88,7 +88,7 @@ paid plans (only Free tier sleeps) — Starter stays warm.
 3. Vercel auto-detects Vite — leave build command (`npm run build`) and output
    directory (`dist`) as default
 4. Add an environment variable:
-   - `VITE_API_BASE` = `https://brotherly-api.onrender.com` (your Render URL from
+   - `API_BASE` = `https://brotherly-api.onrender.com` (your Render URL from
      Part 2, no trailing slash)
 5. Click **Deploy**
 

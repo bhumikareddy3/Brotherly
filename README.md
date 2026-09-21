@@ -66,7 +66,7 @@ npm run dev
 ```
 
 Open the printed local URL (typically `http://localhost:5173`). The frontend talks to
-the backend over `VITE_API_BASE` (CORS is already enabled on the backend for local dev).
+the backend over `API_BASE` (CORS is already enabled on the backend for local dev).
 
 ---
 
