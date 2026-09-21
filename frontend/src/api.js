@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.API_BASE || "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.API_BASE || "https://brotherly-bbvh.onrender.com";
 const TOKEN_KEY = "brotherly_token";
 
 export function getToken() {
@@ -25,8 +25,6 @@ async function request(path, options = {}) {
   }
 
   if (res.status === 401) {
-    // Session expired or invalid — clear it and let the app know so it can
-    // redirect to login, even if this call came from deep in a page.
     setToken(null);
     window.dispatchEvent(new Event("brotherly:unauthorized"));
   }
@@ -55,5 +53,5 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ message, context }),
     }),
-  getChats: () => request("/api/chats"),
+  getchats: () => request("/api/chats"),
 };
