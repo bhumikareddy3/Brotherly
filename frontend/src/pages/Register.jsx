@@ -53,14 +53,24 @@ export default function Register() {
     setError("");
     setSubmitting(true);
     try {
-      const apiBase = import.meta.env.API_BASE || "http://localhost:8000";
+      // FIX: Look for VITE_API_BASE first, and fallback to Render directly
+      const apiBase = import.meta.env.VITE_API_BASE || import.meta.env.API_BASE || "https://brotherly-bbvh.onrender.com";
+
       const res = await fetch(`${apiBase}/api/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: credentialResponse.credential }),
       });
 
-      const data = await res.json();
+      // FIX: Safely parse JSON to prevent the "Unexpected end of JSON input" crash
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error(`Server connection failed (Status: ${res.status})`);
+      }
+
       if (!res.ok) {
         throw new Error(data.detail || "Google authentication failed.");
       }
@@ -95,7 +105,6 @@ export default function Register() {
           A few seconds to set up — then straight into your assessment.
         </p>
 
-        {/* Google Signup Button */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: "1.25rem" }}>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
