@@ -35,7 +35,8 @@ GOOGLE_CLIENT_ID = "750860405732-64hbjc31bug369207fi18envrhuv5iu6.apps.googleuse
 
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://brotherly-ten.vercel.app"
+    "https://brotherly-ten.vercel.app",
+    "https://brotherly-bbvh.onrender.com"
 ]
 
 app.add_middleware(
